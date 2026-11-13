@@ -1,0 +1,8 @@
+{
+  "name": "grid-preview",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Instagram grid preview for Notion content calendars",
+  "engines": { "node": ">=18" }
+}

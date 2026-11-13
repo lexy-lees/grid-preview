@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Preview Setup</title>
+<script src="/config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Setup page: four numbered steps down the left, a live phone preview pinned on the right. */
+:root {
+  --bg: #f6f4f1; --surface: #ffffff; --ink: #1f1c1a; --muted: #736c66; --line: #e4dfd9;
+  --accent: #5c3a4f; --ok: #2f9e5b; --warn: #c9781f; --bad: #c73e36;
+  --display: "Instrument Serif", Georgia, serif;
+  --body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+a { color: var(--accent); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+header.top { max-width: 1120px; margin: 0 auto; padding: 36px 20px 8px; }
+.brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 5vw, 52px); line-height: 1.02; margin: 6px 0 10px; text-wrap: balance; }
+h1 em { color: var(--accent); }
+.lede { max-width: 60ch; color: var(--muted); margin: 0; }
+main { max-width: 1120px; margin: 0 auto; padding: 24px 20px 64px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } .previewCol { position: static !important; } }
+.steps { display: flex; flex-direction: column; gap: 16px; counter-reset: step; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; position: relative; }
+.step.locked { opacity: .55; }
+.step h2 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0 0 4px; display: flex; align-items: center; gap: 12px; line-height: 1.1; }
+.num { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: var(--body); font-size: 13px; font-weight: 700; flex: none; }
+.step.done .num { background: var(--ok); border-color: var(--ok); color: #fff; }
+.step p { margin: 8px 0; max-width: 64ch; }
+ol.how { margin: 10px 0; padding-left: 20px; max-width: 64ch; }
+ol.how li { margin: 5px 0; }
+code, .kbd { font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+input[type="text"], input[type="url"], select { height: 42px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; background: var(--surface); min-width: 0; }
+input.wide { flex: 1 1 320px; }
+.btn { height: 42px; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: #fff; padding: 0 18px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.accent { background: var(--accent); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+.status { display: flex; gap: 10px; align-items: flex-start; border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: 14px; background: var(--bg); }
+.status.ok { background: color-mix(in srgb, var(--ok) 10%, var(--surface)); }
+.status.bad { background: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
+.status.warn { background: color-mix(in srgb, var(--warn) 11%, var(--surface)); }
+.status .ic { font-weight: 700; flex: none; width: 20px; text-align: center; }
+.status.ok .ic { color: var(--ok); } .status.bad .ic { color: var(--bad); } .status.warn .ic { color: var(--warn); }
+.found { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+.found td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.found td:first-child { color: var(--muted); width: 38%; padding-right: 12px; }
+.found .miss { color: var(--warn); }
+.opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px 18px; margin-top: 14px; }
+.opt label, .opt .lbl { display: block; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.opt input[type="text"], .opt select { width: 100%; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); height: 42px; }
+.seg button { border: 0; background: transparent; padding: 0 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
+.toggles label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.toggles input { width: 18px; height: 18px; accent-color: var(--accent); }
+.embed { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.embed input { flex: 1 1 320px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+.previewCol { position: sticky; top: 20px; }
+.phone { border: 10px solid #1f1c1a; border-radius: 42px; overflow: hidden; background: #fff; height: 760px; box-shadow: 0 30px 60px -36px rgba(31,28,26,.6); }
+.phone iframe { width: 100%; height: 100%; border: 0; display: block; }
+.caption { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+.legend { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 16px; font-size: 14px; }
+.legend li { display: flex; gap: 8px; align-items: baseline; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; flex: none; transform: translateY(1px); }
+.legend span { color: var(--muted); }
+details { margin-top: 10px; }
+summary { cursor: pointer; font-weight: 600; }
+footer { max-width: 1120px; margin: 0 auto; padding: 0 20px 40px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand" id="brand">Grid Preview</div>
+  <h1>Set up your <em>Instagram grid</em> preview</h1>
+  <p class="lede">Four short steps. When you're done you'll have a link to paste into Notion, and your planned posts will show up as an Instagram grid right on your calendar page.</p>
+</header>
+
+<main>
+  <div class="steps">
+    <section class="step" id="s1">
+      <h2><span class="num">1</span>Connect Notion</h2>
+      <div id="s1body"><div class="status"><span class="ic">…</span><span>Checking your Notion key…</span></div></div>
+    </section>
+
+    <section class="step locked" id="s2">
+      <h2><span class="num">2</span>Pick your content calendar</h2>
+      <p>First give the widget access to your calendar:</p>
+      <ol class="how">
+        <li>Open your content calendar database in Notion (as a full page).</li>
+        <li>Click <b>•••</b> in the top-right corner → <b>Connections</b> → choose the connection you made in step 1.</li>
+        <li>If your calendar links to a Clients database, share that one too so the account picker works.</li>
+        <li>Click <b>Share</b> → <b>Copy link</b>, and paste the link below.</li>
+      </ol>
+      <form class="row" id="dbForm">
+        <label for="dbLink" class="sr" style="position:absolute;left:-9999px">Notion calendar link</label>
+        <input type="url" id="dbLink" class="wide" placeholder="https://www.notion.so/…" autocomplete="off" required>
+        <button class="btn" id="checkBtn" type="submit">Check calendar</button>
+      </form>
+      <div id="s2result"></div>
+    </section>
+
+    <section class="step locked" id="s3">
+      <h2><span class="num">3</span>Make it yours</h2>
+      <p>Changes show up in the preview straight away.</p>
+      <div class="opts">
+        <div class="opt"><label for="handle">Name at the top</label><input type="text" id="handle" placeholder="@yourhandle"></div>
+        <div class="opt" id="clientOpt" hidden><label for="client">Only show one account</label><select id="client"><option value="">All accounts</option></select></div>
+        <div class="opt"><span class="lbl">Posts to show</span><div class="seg" data-key="count"><button type="button" data-v="9">9</button><button type="button" data-v="12">12</button><button type="button" data-v="18">18</button><button type="button" data-v="24">24</button></div></div>
+        <div class="opt"><span class="lbl">Tile shape</span><div class="seg" data-key="shape"><button type="button" data-v="portrait">3:4 (new IG)</button><button type="button" data-v="square">Square</button></div></div>
+        <div class="opt"><label for="theme">Background</label><select id="theme"><option value="light">Light (Notion light mode)</option><option value="dark">Dark (Notion dark mode)</option><option value="transparent">Transparent</option><option value="auto">Match device</option></select></div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="dots" checked> Status dots</label>
+        <label><input type="checkbox" id="header" checked> Profile header</label>
+        <label><input type="checkbox" id="legend"> Dot color key</label>
+        <label><input type="checkbox" id="dates"> Dates on photos</label>
+      </div>
+      <details>
+        <summary>What the dot colors mean</summary>
+        <ul class="legend">
+          <li><i style="background:#b4b0aa"></i>Idea / drafting <span>any other status</span></li>
+          <li><i style="background:#e8912d"></i>Ready for review <span>"review", "pending"</span></li>
+          <li><i style="background:#d6453d"></i>Changes requested <span>"changes", "revise"</span></li>
+          <li><i style="background:#2f9e5b"></i>Approved <span>"approved", or an Approved checkbox</span></li>
+          <li><i style="background:#2f6fd6"></i>Scheduled <span>"scheduled", "queued"</span></li>
+          <li><i style="background:#8a4fc4"></i>Posted <span>"posted", "published", "done"</span></li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="step locked" id="s4">
+      <h2><span class="num">4</span>Add it to Notion</h2>
+      <div class="embed">
+        <label for="embedUrl" style="position:absolute;left:-9999px">Embed link</label>
+        <input type="text" id="embedUrl" readonly value="Finish step 2 first">
+        <button class="btn accent" id="copyBtn" type="button" disabled>Copy embed link</button>
+      </div>
+      <ol class="how">
+        <li>On your Notion page, type <span class="kbd">/embed</span> and press Enter.</li>
+        <li>Paste the link and click <b>Embed link</b>.</li>
+        <li>Drag the edges of the embed to about phone width (around 500 px wide, 800 px tall).</li>
+      </ol>
+      <p>Your grid updates by itself. To add a photo, upload it to the post's <b id="photoProp">Cover Image</b> property in Notion, then press Refresh on the grid.</p>
+    </section>
+  </div>
+
+  <aside class="previewCol" aria-label="Live preview">
+    <div class="phone"><iframe id="preview" title="Grid preview" src="/widget"></iframe></div>
+    <div class="caption">Live preview: this is how it will look in Notion</div>
+  </aside>
+</main>
+<footer id="foot"></footer>
+
+<script>
+(() => {
+  const B = window.GRID_BRAND || {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  if (B.accent) document.documentElement.style.setProperty("--accent", B.accent);
+  if (B.productName) { $("brand").textContent = B.productName + (B.madeBy ? " · by " + B.madeBy : ""); document.title = B.productName + " Setup"; }
+  const help = [B.supportEmail ? `Email <b>${esc(B.supportEmail)}</b>` : "", B.supportUrl ? `<a href="${esc(B.supportUrl)}" target="_blank" rel="noopener">visit the help page</a>` : ""].filter(Boolean).join(" or ");
+  $("foot").innerHTML = help ? `Stuck? ${help}.` : "";
+
+  const cfg = { db: "", handle: "", client: "", count: "12", shape: "portrait", theme: "light", dots: true, header: true, legend: false, dates: false };
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem("gp-setup") || "{}")); } catch {}
+  const save = () => { try { localStorage.setItem("gp-setup", JSON.stringify(cfg)); } catch {} };
+
+  function status(kind, html) {
+    const ic = { ok: "✓", bad: "!", warn: "!", wait: "…" }[kind];
+    return `<div class="status ${kind}"><span class="ic">${ic}</span><span>${html}</span></div>`;
+  }
+  function unlock(id, on) { $(id).classList.toggle("locked", !on); }
+  function done(id, on) { $(id).classList.toggle("done", on); }
+
+  // ---- Step 1 ----
+  async function checkToken() {
+    try {
+      const r = await fetch("/api/check", { cache: "no-store" });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.token) {
+        $("s1body").innerHTML = status("ok", "Notion is connected. Your key is saved safely in your Vercel project, and nobody viewing the widget can see it.");
+        done("s1", true); unlock("s2", true);
+        if (cfg.db) { $("dbLink").value = cfg.db; checkDb(); }
+        return;
+      }
+      throw d.error || {};
+    } catch (e) {
+      const noFunctions = !e.code;
+      $("s1body").innerHTML = `
+        ${status("bad", noFunctions ? "The widget's server isn't answering. If you're opening this file on your computer, deploy it to Vercel first (see the setup guide)." : "Your Notion key hasn't been added yet. It takes about two minutes:")}
+        <ol class="how">
+          <li>Go to <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so/profile/integrations</a> and click <b>New integration</b>.</li>
+          <li>Name it <b>${esc(B.productName || "Grid Preview")}</b>, pick your workspace, set the type to <b>Internal</b>, and save.</li>
+          <li>Under <b>Capabilities</b>, tick only <b>Read content</b>, then save.</li>
+          <li>Copy the <b>Internal Integration Secret</b> (it starts with <code>ntn_</code>).</li>
+          <li>In your Vercel project, open <b>Settings → Environment Variables</b>. Add one called <code>NOTION_TOKEN</code> and paste the secret as the value.</li>
+          <li>Open <b>Deployments</b>, click <b>•••</b> on the newest one → <b>Redeploy</b>. Then reload this page.</li>
+        </ol>
+        <div class="row"><button class="btn ghost" type="button" id="recheck">I've done this, check again</button></div>`;
+      $("recheck").onclick = () => { $("s1body").innerHTML = status("wait", "Checking…"); checkToken(); };
+    }
+  }
+
+  // ---- Step 2 ----
+  const LABELS = { image: "Photos come from", date: "Post date", status: "Status", approved: "Approved checkbox", format: "Post format", client: "Account / client" };
+  async function checkDb() {
+    const link = $("dbLink").value.trim();
+    if (!link) return;
+    $("checkBtn").disabled = true;
+    $("s2result").innerHTML = status("wait", "Looking at your calendar…");
+    try {
+      const r = await fetch("/api/check?db=" + encodeURIComponent(link), { cache: "no-store" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw d.error || { message: "Couldn't reach Notion." };
+      cfg.db = d.id; save();
+      const f = d.fields;
+      const rows = Object.entries(LABELS).map(([k, label]) => {
+        const v = f[k];
+        let note = v ? `<b>${esc(v)}</b>` : "";
+        if (!v && k === "image") note = `<span class="miss">No Files &amp; media property found. Each post's page cover will be used instead.</span>`;
+        else if (!v && k === "date") note = `<span class="miss">No date property found. Posts will be ordered by when they were created.</span>`;
+        else if (!v && k === "status") note = f.approved ? "Uses the Approved checkbox" : `<span class="miss">None found. All dots will show grey.</span>`;
+        else if (!v) note = `<span style="color:var(--muted)">None (that's fine)</span>`;
+        if (k === "format" && v) note += ` <span style="color:var(--muted)">· Stories are left out of the grid</span>`;
+        return `<tr><td>${label}</td><td>${note}</td></tr>`;
+      }).join("");
+      $("s2result").innerHTML = status("ok", `Found <b>${esc(d.title)}</b>. Here's what the widget will use:`) + `<table class="found">${rows}</table>`;
+      $("photoProp").textContent = f.image || "page cover";
+      const sel = $("client");
+      if (d.clients && d.clients.length) {
+        sel.innerHTML = '<option value="">All accounts</option>' + d.clients.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+        sel.value = d.clients.includes(cfg.client) ? cfg.client : "";
+        cfg.client = sel.value;
+        $("clientOpt").hidden = false;
+      } else { $("clientOpt").hidden = true; cfg.client = ""; }
+      done("s2", true); unlock("s3", true); unlock("s4", true); done("s3", true);
+      update();
+    } catch (e) {
+      $("s2result").innerHTML = status("bad", esc(e.message || "Something went wrong. Try again."));
+      done("s2", false);
+    } finally { $("checkBtn").disabled = false; }
+  }
+  $("dbForm").addEventListener("submit", e => { e.preventDefault(); checkDb(); });
+
+  // ---- Step 3 + 4 ----
+  function embedUrl() {
+    const p = new URLSearchParams({ db: cfg.db, count: cfg.count });
+    if (cfg.handle) p.set("handle", cfg.handle);
+    if (cfg.client) p.set("client", cfg.client);
+    if (cfg.shape !== "portrait") p.set("shape", cfg.shape);
+    if (cfg.theme !== "light") p.set("theme", cfg.theme);
+    if (!cfg.dots) p.set("dots", "0");
+    if (!cfg.header) p.set("header", "0");
+    if (cfg.legend) p.set("legend", "1");
+    if (cfg.dates) p.set("dates", "1");
+    return location.origin + "/widget?" + p.toString();
+  }
+  let previewTimer;
+  function update() {
+    document.querySelectorAll(".seg").forEach(s => s.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(cfg[s.dataset.key] === b.dataset.v))));
+    if (!cfg.db) return;
+    const url = embedUrl();
+    $("embedUrl").value = url;
+    $("copyBtn").disabled = false;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => { if ($("preview").src !== url) $("preview").src = url; }, 350);
+    save();
+  }
+  $("handle").value = cfg.handle; $("theme").value = cfg.theme;
+  ["dots", "header", "legend", "dates"].forEach(k => { $(k).checked = cfg[k]; $(k).onchange = () => { cfg[k] = $(k).checked; update(); }; });
+  $("handle").oninput = () => { cfg.handle = $("handle").value.trim(); update(); };
+  $("client").onchange = () => { cfg.client = $("client").value; update(); };
+  $("theme").onchange = () => { cfg.theme = $("theme").value; update(); };
+  document.querySelectorAll(".seg").forEach(s => s.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; cfg[s.dataset.key] = b.dataset.v; update(); }));
+  $("copyBtn").onclick = async () => {
+    try { await navigator.clipboard.writeText($("embedUrl").value); }
+    catch { $("embedUrl").select(); document.execCommand && document.execCommand("copy"); }
+    $("copyBtn").textContent = "Copied ✓"; done("s4", true);
+    setTimeout(() => { $("copyBtn").textContent = "Copy embed link"; }, 2000);
+  };
+
+  update();
+  checkToken();
+})();
+</script>
+</body>
+</html>

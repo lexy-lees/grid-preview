@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Preview</title>
+<script src="/config.js"></script>
+<style>
+/* The embed: a phone-width Instagram profile grid that sits inside a Notion embed block.
+   Fonts follow Notion's own stack so it looks native on the page. */
+:root {
+  --bg: #ffffff; --ink: #37352f; --muted: #787774; --line: #e9e9e7; --tile: #f1f0ee;
+  --s-idea: #b4b0aa; --s-review: #e8912d; --s-changes: #d6453d; --s-approved: #2f9e5b; --s-scheduled: #2f6fd6; --s-posted: #8a4fc4;
+  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] { --bg: #191919; --ink: #e9e9e7; --muted: #9b9a97; --line: #2f2f2f; --tile: #252525; color-scheme: dark; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] { --bg: #191919; --ink: #e9e9e7; --muted: #9b9a97; --line: #2f2f2f; --tile: #252525; color-scheme: dark; } }
+:root[data-theme="transparent"] { --bg: transparent; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 12px 8px; }
+.head { display: flex; align-items: center; gap: 12px; padding: 4px 4px 12px; }
+.avatar { width: 52px; height: 52px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, #f6c574, #e1306c 55%, #833ab4); flex: none; }
+.avatar span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--bg); border: 2px solid var(--bg); font-weight: 700; font-size: 20px; }
+.who { min-width: 0; flex: 1; }
+.handle { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.refresh { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 6px; height: 28px; padding: 0 9px; font: inherit; font-size: 12px; cursor: pointer; }
+.refresh:hover { color: var(--ink); }
+.tabs { border-top: 1px solid var(--line); display: flex; justify-content: center; }
+.tabs span { border-top: 1px solid var(--ink); margin-top: -1px; padding: 8px 0 10px; font-size: 11px; font-weight: 700; letter-spacing: .12em; display: inline-flex; gap: 6px; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.tile { position: relative; aspect-ratio: 3 / 4; background: var(--tile); overflow: hidden; display: block; color: inherit; text-decoration: none; }
+.square .tile { aspect-ratio: 1 / 1; }
+.tile img, .tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tile .ph { position: absolute; inset: 0; padding: 9px; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(128,120,110,.08) 9px 18px); }
+.tile .ph b { font-size: 12.5px; line-height: 1.2; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.tile .ph small { color: var(--muted); font-size: 10.5px; }
+.dot { position: absolute; top: 6px; right: 6px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.2); }
+.kind { position: absolute; top: 5px; left: 6px; color: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,.55)); }
+.noimg .kind { color: var(--muted); filter: none; }
+.hover { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; gap: 2px; background: linear-gradient(transparent 35%, rgba(0,0,0,.7)); color: #fff; opacity: 0; transition: opacity .15s; }
+.tile:hover .hover, .tile:focus-visible .hover { opacity: 1; }
+.noimg .hover { display: none; }
+.hover b { font-size: 12px; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hover small { font-size: 10.5px; opacity: .85; }
+.dates .tile:not(.noimg)::after { content: attr(data-date); position: absolute; left: 6px; bottom: 5px; font-size: 10px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.dates .tile:hover::after { display: none; }
+.skeleton { animation: pulse 1.3s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } .hover { transition: none; } }
+.msg { padding: 28px 18px; text-align: center; color: var(--muted); line-height: 1.5; }
+.msg b { display: block; color: var(--ink); margin-bottom: 4px; }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; padding: 10px 4px 2px; font-size: 11px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; }
+:focus-visible { outline: 2px solid #2f6fd6; outline-offset: -2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head" id="head">
+    <div class="avatar"><span id="letter">·</span></div>
+    <div class="who"><div class="handle" id="handle">Loading…</div><div class="sub" id="sub">&nbsp;</div></div>
+    <button class="refresh" id="refresh" type="button" aria-label="Refresh from Notion">↻ Refresh</button>
+  </div>
+  <div class="tabs" id="tabs"><span><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M0 0h3.5v3.5H0zM4.25 0h3.5v3.5h-3.5zM8.5 0H12v3.5H8.5zM0 4.25h3.5v3.5H0zM4.25 4.25h3.5v3.5h-3.5zM8.5 4.25H12v3.5H8.5zM0 8.5h3.5V12H0zM4.25 8.5h3.5V12h-3.5zM8.5 8.5H12V12H8.5z" fill="currentColor"/></svg>POSTS</span></div>
+  <div class="grid" id="grid" aria-live="polite"></div>
+  <div class="legend" id="legend"></div>
+</div>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  const opt = {
+    db: q.get("db") || "",
+    count: Math.max(3, Math.min(60, parseInt(q.get("count"), 10) || 12)),
+    client: q.get("client") || "",
+    handle: q.get("handle") || "",
+    shape: q.get("shape") === "square" ? "square" : "portrait",
+    theme: ["light", "dark", "auto", "transparent"].includes(q.get("theme")) ? q.get("theme") : "light",
+    dots: q.get("dots") !== "0",
+    header: q.get("header") !== "0",
+    legend: q.get("legend") === "1",
+    dates: q.get("dates") === "1",
+  };
+  document.documentElement.dataset.theme = opt.theme;
+  const $ = id => document.getElementById(id);
+  const grid = $("grid");
+  if (opt.shape === "square") grid.classList.add("square");
+  if (opt.dates) grid.classList.add("dates");
+  if (!opt.header) { $("head").style.display = "none"; $("tabs").style.display = "none"; }
+
+  const STATUS = {
+    idea: ["Idea / drafting", "var(--s-idea)"], review: ["Ready for review", "var(--s-review)"],
+    changes: ["Changes requested", "var(--s-changes)"], approved: ["Approved", "var(--s-approved)"],
+    scheduled: ["Scheduled", "var(--s-scheduled)"], posted: ["Posted", "var(--s-posted)"],
+  };
+  const ICON = {
+    reel: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="M10 11.5v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>',
+    carousel: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="7" width="14" height="14" rx="2"/><path d="M17 3H5a2 2 0 0 0-2 2v12"/></svg>',
+  };
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = iso => { if (!iso) return "No date"; const [y, m, d] = iso.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
+
+  function setHeader(name, sub) {
+    $("handle").textContent = name;
+    $("letter").textContent = (name.replace(/^@/, "")[0] || "·").toUpperCase();
+    $("sub").textContent = sub;
+  }
+
+  function skeleton() {
+    grid.innerHTML = Array.from({ length: opt.count }, () => '<div class="tile skeleton" aria-hidden="true"></div>').join("");
+  }
+
+  function message(title, body) {
+    grid.innerHTML = `<div class="msg" style="grid-column:1/-1"><b>${esc(title)}</b>${esc(body)}</div>`;
+  }
+
+  function render(feed) {
+    const posts = feed.posts || [];
+    const name = opt.handle || opt.client || feed.database;
+    const waiting = posts.filter(p => p.status !== "posted").length;
+    setHeader(name, `${posts.length} posts · ${waiting} not live yet`);
+    if (!posts.length) {
+      message("No feed posts yet", "Add posts with a date to your Notion calendar and press Refresh. Stories are left out on purpose.");
+      $("legend").innerHTML = "";
+      return;
+    }
+    grid.innerHTML = posts.map(p => {
+      const [label, color] = STATUS[p.status] || STATUS.idea;
+      const media = p.image
+        ? `<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+        : p.video ? `<video src="${esc(p.video)}#t=0.5" muted playsinline preload="metadata"></video>` : "";
+      const statusText = p.statusLabel || label;
+      return `<a class="tile${media ? "" : " noimg"}" href="${esc(p.url)}" target="_blank" rel="noopener" data-date="${esc(fmt(p.date))}" title="${esc(p.title)} · ${esc(fmt(p.date))} · ${esc(statusText)}">
+        ${media || `<div class="ph"><b>${esc(p.title)}</b><small>${esc(fmt(p.date))} · no photo yet</small></div>`}
+        ${ICON[p.kind] ? `<span class="kind">${ICON[p.kind]}</span>` : ""}
+        ${opt.dots ? `<span class="dot" style="background:${color}"></span>` : ""}
+        <span class="hover"><b>${esc(p.title)}</b><small>${esc(fmt(p.date))} · ${esc(statusText)}</small></span>
+      </a>`;
+    }).join("");
+    // A photo link can expire while the page sits open; reload the feed if one fails.
+    grid.querySelectorAll("img").forEach(img => img.addEventListener("error", () => scheduleReload(), { once: true }));
+    if (opt.legend && opt.dots) {
+      const used = new Set(posts.map(p => p.status));
+      $("legend").innerHTML = Object.entries(STATUS).filter(([k]) => used.has(k)).map(([, [l, c]]) => `<span><i style="background:${c}"></i>${l}</span>`).join("");
+    }
+  }
+
+  let reloadTimer = null;
+  function scheduleReload() { if (reloadTimer) return; reloadTimer = setTimeout(() => { reloadTimer = null; load(true); }, 1500); }
+
+  let loading = false;
+  async function load(quiet) {
+    if (loading) return;
+    if (!opt.db) {
+      setHeader("Grid Preview", "Not set up yet");
+      message("This widget isn't connected to a calendar yet", "Open the setup page for your widget, paste your Notion calendar link, and copy the embed link it gives you.");
+      return;
+    }
+    loading = true;
+    if (!quiet) skeleton();
+    $("refresh").textContent = "Refreshing…";
+    try {
+      const params = new URLSearchParams({ db: opt.db, count: opt.count });
+      if (opt.client) params.set("client", opt.client);
+      const res = await fetch("/api/feed?" + params, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw data.error || { message: "Couldn't reach Notion." };
+      render(data);
+    } catch (e) {
+      setHeader(opt.handle || "Grid Preview", "Couldn't load");
+      message("Couldn't load your calendar", e.message || "Check your connection and press Refresh.");
+    } finally {
+      loading = false;
+      $("refresh").textContent = "↻ Refresh";
+    }
+  }
+
+  $("refresh").addEventListener("click", () => load(false));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") load(true); });
+  setInterval(() => { if (document.visibilityState === "visible") load(true); }, 5 * 60 * 1000);
+  load(false);
+})();
+</script>
+</body>
+</html>
